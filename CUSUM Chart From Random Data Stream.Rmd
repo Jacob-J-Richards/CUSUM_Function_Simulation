@@ -1,0 +1,322 @@
+---
+title: "Homework 3 - Jacob Richards"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-09-25"
+---
+1) Develop an S4 class that implements the CUSUM chart including a show()
+method. You will need to store the lower and upper signals as slots.
+Hint: See example in charts.R in shewhart.chart.zip.
+
+
+```{r}
+
+
+CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two", r = 30)
+
+
+# Define the class
+setClass("Data_stream", 
+         representation(delta = "numeric",
+                        x = "numeric",
+                        random_t = "numeric",
+                        Upper_signal = "numeric",
+                        Lower_signal = "numeric",
+                        IC.ARL  = "numeric",
+                        CL      = "numeric",
+                        time = "numeric",  # Add this line to include 'time' slot
+                        time_values = "numeric",
+                        stopped = "logical",
+                        x_values = "numeric",
+                        Upper_signal_vector = "numeric",  # Stores all upper signals
+                        Lower_signal_vector = "numeric"))  # Stores all lower signals
+
+
+```
+
+```{r}
+setGeneric("create_Data_Stream", 
+           function(IC.ARL = 370, random_t = as.integer(runif(1, 0, 100)), 
+             time = 0, delta = 1, CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0,
+             hs = 0, sided = "two", r = 30)) {
+             standardGeneric("create_Data_Stream")
+           })
+
+setMethod("create_Data_Stream", signature = "ANY", 
+          function(IC.ARL = 370, random_t = as.integer(runif(1, 0, 100)), 
+                   time = 0, delta = 1, CL = spc::xcusum.crit(k = 0.5, L0 = 370.0,
+                   mu0 = 0, hs = 0, sided = "two", r = 30)) {
+
+    new_data <- new("Data_stream", 
+                IC.ARL = IC.ARL, random_t = random_t, delta = delta,
+                x = 1, Upper_signal = 0, Lower_signal = 0, 
+                CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",
+                r = 30), time = time, stopped = FALSE,
+                x_values = numeric(),
+                Upper_signal_vector = numeric(), 
+                Lower_signal_vector = numeric(),  
+                time_values = numeric())  
+
+    time_counter <- 0  
+
+    while (time_counter < random_t) {
+      new_data@x <- rnorm(1, 0, 1)  # Generate data from N(0, 1) before random_t
+      new_data@x_values <- c(new_data@x_values, new_data@x)  # Store x
+
+      # Update the Upper and Lower CUSUM signals
+      new_data@Lower_signal <- min(0, new_data@Lower_signal + new_data@x + 0.5)
+      new_data@Upper_signal <- max(0, new_data@Upper_signal + new_data@x - 0.5)
+
+      # Store the updated signals and time
+      new_data@Upper_signal_vector <- c(new_data@Upper_signal_vector, new_data@Upper_signal)
+      new_data@Lower_signal_vector <- c(new_data@Lower_signal_vector, new_data@Lower_signal)
+      new_data@time_values <- c(new_data@time_values, time_counter)  # Store the time step
+
+      # Update the data stream and check for stopping condition
+      new_data <- update_Data_Stream(new_data, new_data@x)
+
+      # Break out of the loop if stopped
+      if (new_data@stopped) {
+        break
+      }
+      
+      time_counter <- time_counter + 1  # Increment the time counter
+    }
+
+    # Post-change phase
+    while (!new_data@stopped) {
+      new_data@x <- rnorm(1, delta, 1)  # Generate data from N(delta, 1) after random_t
+      new_data@x_values <- c(new_data@x_values, new_data@x)  # Store x
+
+      # Update the Upper and Lower CUSUM signals
+      new_data@Lower_signal <- min(0, new_data@Lower_signal + new_data@x + 0.5)
+      new_data@Upper_signal <- max(0, new_data@Upper_signal + new_data@x - 0.5)
+
+      # Store the updated signals and time
+      new_data@Upper_signal_vector <- c(new_data@Upper_signal_vector, new_data@Upper_signal)
+      new_data@Lower_signal_vector <- c(new_data@Lower_signal_vector, new_data@Lower_signal)
+      new_data@time_values <- c(new_data@time_values, time_counter)  # Store the time step
+
+      # Update the data stream and check for stopping condition
+      new_data <- update_Data_Stream(new_data, new_data@x)
+
+      
+      if (new_data@stopped) {
+        break
+      }
+
+      time_counter <- time_counter + 1  # Increment the time counter
+    }
+
+    return(new_data)
+})
+
+
+```
+
+
+
+
+```{r}
+setGeneric("update_Data_Stream", 
+           function(new_data, x) {
+             standardGeneric("update_Data_Stream")
+           })
+setMethod("update_Data_Stream", signature = "Data_stream", 
+          function(new_data, x) {
+  # Increment the time step
+  new_data@time <- new_data@time + 1
+  
+  # Check if the last values of Upper and Lower signal vectors exceed the control limit
+  if (length(new_data@Upper_signal_vector) > 0) {
+    new_data@stopped <- (tail(new_data@Upper_signal_vector, 1) > new_data@CL) || 
+                        ((tail(new_data@Lower_signal_vector, 1)) < -new_data@CL)
+  }
+  if (length(new_data@Lower_signal_vector) > 0 ) {
+    new_data@stopped <- (tail(new_data@Upper_signal_vector, 1) > new_data@CL) || 
+                        ((tail(new_data@Lower_signal_vector, 1)) < -new_data@CL)
+  }
+
+  
+  
+  return(new_data)
+})
+
+
+```
+
+
+```{r}
+setMethod("show", signature = "Data_stream", function(object) {
+  # Plot the upper signal with a blue line
+  plot(object@time_values, object@Upper_signal_vector, type = "l", col = "blue", 
+       ylab = "Signal", xlab = "Time", main = "Upper and Lower Signals Over Time", 
+       ylim = range(c(object@Upper_signal_vector, object@Lower_signal_vector, object@CL,-object@CL)))  
+  
+  # Add the lower signal with a red line
+  lines(object@time_values, object@Lower_signal_vector, col = "red")  # Use lines() for lower signal
+  
+  object@CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two", r = 30)
+  
+  # Add horizontal lines for control limits
+  abline(h = object@CL, col = "green", lty = 2)  # Positive control limit
+  abline(h = -object@CL, col = "orange", lty = 2)  # Negative control limit
+  abline(v = object@random_t, col = "pink", lty = 2)
+  
+cat("Data steam display \n")
+            
+            cat("control limit reached at this time  =", object@time, "\n")
+            cat("mean changed at this time  =", object@random_t, "\n")
+            cat("absolute value control limit", object@CL, "\n")
+            cat("Last five upper limits:", tail(object@Upper_signal_vector, 5), "\n")
+            cat("Last five lower limits:", tail(object@Lower_signal_vector, 5), "\n")
+            
+})
+
+
+```
+
+
+It is unlikely but sometimes the control limit will be reached before the mean changes. 
+```{r}
+
+new_data <- create_Data_Stream()
+
+new_data <- update_Data_Stream(new_data, new_data@x)  
+
+show(new_data)
+
+```
+
+
+
+
+
+
+Let k = 0.5 and CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0, hs = 0,
+sided = "two", r = 30). Generate N = 10,000 i.i.d. standard normal data
+streams and compute the associated stopping times CUSUM.
+a) Plot a histogram for the resulting 10,000 CUSUM values.
+b) Calculate the sample mean of CUSUM (referred to as “in-control average
+run length (ARL)”). The value should be close to 370.2)
+
+
+
+```{r}
+
+library(spc)
+
+CL <- spc::xcusum.crit(k = 0.5, L0 = 370, mu0 = 0, hs = 0, sided = "two", r = 30)
+
+# Define the class
+setClass("Data_stream_2", 
+         representation(delta = "numeric",
+                        x = "numeric",
+                        random_t = "numeric",
+                        Upper_signal = "numeric",
+                        Lower_signal = "numeric",
+                        CL = "numeric",
+                        stopped = "logical",
+                        x_values = "numeric",
+                        Upper_signal_vector = "numeric",  
+                        Lower_signal_vector = "numeric",  
+                        iteration_count = "numeric"))     
+
+# Define create_Data_Stream_2 method
+setGeneric("create_Data_Stream_2", 
+           function(random_t = as.integer(runif(1, 0, 100)), 
+                    delta = 0, CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0,
+                    hs = 0, sided = "two", r = 30),k=0.5, l0=370,mu0=0, hs=0, sided="two", r=30)
+             standardGeneric("create_Data_Stream_2"))
+
+setMethod("create_Data_Stream_2", signature = "ANY", 
+          function(random_t = as.integer(runif(1, 0, 100)), 
+                    delta = 0, CL = spc::xcusum.crit(k = 0.5, L0 = 370.0, mu0 = 0,
+                    hs = 0, sided = "two", r = 30), k=0.5, l0=370,mu0=0, hs=0, sided="two", r=30) {
+
+   
+
+    # Initialize a new Data_stream_2 object
+    new_data_2 <- new("Data_stream_2", 
+                      delta = delta,
+                      x = 1, 
+                      Upper_signal = 0, 
+                      Lower_signal = 0, 
+                      CL = CL, 
+                      stopped = FALSE,
+                      x_values = numeric(),
+                      Upper_signal_vector = numeric(),  
+                      Lower_signal_vector = numeric(),  
+                      iteration_count = 0)  
+
+    while (!new_data_2@stopped) {
+      # Generate data from N(0, 1)
+      new_data_2@x <- rnorm(1, 0, 1)
+      
+      # Store x values
+      new_data_2@x_values <- c(new_data_2@x_values, new_data_2@x)
+
+      # Update the Upper and Lower CUSUM signals
+      new_data_2@Lower_signal <- min(0, new_data_2@Lower_signal + new_data_2@x + k)
+      new_data_2@Upper_signal <- max(0, new_data_2@Upper_signal + new_data_2@x - k)
+
+      # Store the updated signals
+      new_data_2@Upper_signal_vector <- c(new_data_2@Upper_signal_vector, new_data_2@Upper_signal)
+      new_data_2@Lower_signal_vector <- c(new_data_2@Lower_signal_vector, new_data_2@Lower_signal)
+
+      # Increment the iteration count
+      new_data_2@iteration_count <- new_data_2@iteration_count + 1
+      
+      # Update the data stream and check for stopping condition
+      new_data_2 <- update_Data_Stream_2(new_data_2, new_data_2@x)
+
+      if (new_data_2@stopped) {
+        break
+      }
+    }
+
+    return(new_data_2)
+})
+
+# Define update_Data_Stream_2 method
+setGeneric("update_Data_Stream_2", 
+           function(new_data_2, x_2) {
+             standardGeneric("update_Data_Stream_2")
+           })
+
+setMethod("update_Data_Stream_2", signature = "Data_stream_2",function(new_data_2, x_2) {
+  
+  # Check if the last values of Upper and Lower signal vectors exceed the control limit
+  if (length(new_data_2@Upper_signal_vector) > 0) {
+    new_data_2@stopped <- (tail(new_data_2@Upper_signal_vector, 1) > new_data_2@CL) || 
+                        (tail(new_data_2@Lower_signal_vector, 1) < -new_data_2@CL)
+  }
+            
+            if (length(new_data_2@Lower_signal_vector) > 0) {
+    new_data_2@stopped <- (tail(new_data_2@Upper_signal_vector, 1) > new_data_2@CL) || 
+                        (tail(new_data_2@Lower_signal_vector, 1) < -new_data_2@CL)
+  }
+
+  return(new_data_2)
+})
+
+# Run and collect stopping times for N = 10,000 streams
+N <- 10000
+stopping_times <- numeric(N)
+
+for (i in 1:N) {
+  new_data_2 <- create_Data_Stream_2()  # CL will be dynamically calculated
+  stopping_times[i] <- new_data_2@iteration_count
+}
+summary(stopping_times)
+hist(stopping_times, breaks = 50, main = "Histogram of Stopping Times",
+     xlab = "Stopping Time", col = "lightblue")
+print(mean(stopping_times))
+
+
+```
+
+
+
+
