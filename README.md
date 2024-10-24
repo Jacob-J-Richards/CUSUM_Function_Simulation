@@ -28,17 +28,13 @@ The sample mean of the stopping times (the in-control Average Run Length, ARL) i
 
 Example Usage:
 
-    Create a data stream and monitor the signals:
+Create a data stream and monitor the signals:
 
-    r
-
-new_data <- create_Data_Stream()
-new_data <- update_Data_Stream(new_data, new_data@x)
-show(new_data)
+    new_data <- create_Data_Stream()
+    new_data <- update_Data_Stream(new_data, new_data@x)
+    show(new_data)
 
 Run the simulation for 10,000 data streams and calculate stopping times:
-
-r
 
     N <- 10000
     stopping_times <- numeric(N)
