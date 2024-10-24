@@ -10,8 +10,7 @@ Create a data stream and monitor the signals:
     new_data <- update_Data_Stream(new_data, new_data@x)
     show(new_data)
 
-![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/cusum.JPG)
-![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/monitor.JPG)
+![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/both.JPG)
 
 
 Run the simulation for 10,000 data streams and calculate stopping times:
