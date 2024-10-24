@@ -1,13 +1,10 @@
 ---
-title: "Homework 3 - Jacob Richards"
+title: "Jacob Richards"
 output:
   pdf_document: default
   html_document: default
 date: "2024-09-25"
 ---
-1) Develop an S4 class that implements the CUSUM chart including a show()
-method. You will need to store the lower and upper signals as slots.
-Hint: See example in charts.R in shewhart.chart.zip.
 
 
 ```{r}
