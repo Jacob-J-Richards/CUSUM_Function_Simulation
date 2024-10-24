@@ -1,6 +1,34 @@
 This project implements a Cumulative Sum (CUSUM) Chart for detecting shifts in the mean of a data stream composed of Gaussian random variables. The CUSUM chart is designed to monitor and signal when there is sufficient statistical evidence to conclude that the mean of the data stream has changed. This implementation follows an S4 class structure in R, allowing for flexible and customizable CUSUM chart simulations.
-Key Features:
 
+
+
+Example Usage:
+
+Create a data stream and monitor the signals:
+
+    new_data <- create_Data_Stream()
+    new_data <- update_Data_Stream(new_data, new_data@x)
+    show(new_data)
+
+![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/cusum.JPG)
+![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/monitor.JPG)
+
+
+Run the simulation for 10,000 data streams and calculate stopping times:
+
+    N <- 10000
+    stopping_times <- numeric(N)
+    for (i in 1:N) {
+      new_data_2 <- create_Data_Stream_2()
+      stopping_times[i] <- new_data_2@iteration_count
+    }
+    hist(stopping_times)
+    print(mean(stopping_times))
+    
+![alt text](https://github.com/Jacob-J-Richards/CUSUM-Chart-From-Random-Data-Stream/blob/main/histogram.JPG)
+
+
+Key Features:
 CUSUM Chart Setup:
 The data stream starts with random variables sampled from a normal distribution N(0,1).
 At a random time, the data stream switches to a new normal distribution N(delta,1), where delta represents the shift in the mean.
@@ -25,25 +53,6 @@ Histogram of Stopping Times:
 The simulation is repeated for N = 10,000 data streams, and the stopping times are recorded.
 A histogram of the stopping times is plotted to visualize the distribution of detection times.
 The sample mean of the stopping times (the in-control Average Run Length, ARL) is calculated and is expected to be close to 370, based on the chosen control limit parameters.
-
-Example Usage:
-
-Create a data stream and monitor the signals:
-
-    new_data <- create_Data_Stream()
-    new_data <- update_Data_Stream(new_data, new_data@x)
-    show(new_data)
-
-Run the simulation for 10,000 data streams and calculate stopping times:
-
-    N <- 10000
-    stopping_times <- numeric(N)
-    for (i in 1:N) {
-      new_data_2 <- create_Data_Stream_2()
-      stopping_times[i] <- new_data_2@iteration_count
-    }
-    hist(stopping_times)
-    print(mean(stopping_times))
 
 Conclusion:
 
