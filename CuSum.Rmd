@@ -3,7 +3,7 @@ title: "CUSUM chart"
 output: html_document
 date: "2024-10-27"
 ---
-
+the originol took 
 set class
 ```{r}
 setClass("CUSUM", representation(upper_signal = "numeric",
