@@ -5,7 +5,7 @@ date: "2024-10-27"
 ---
 
 ```{r}
-CUSUM_Chart <- function(user_data,user_mu_naught) {
+CUSUM_Chart <- function(user_data,user_mu_naught,user_k) {
   
 setClass("CUSUM", representation(upper_signal = "numeric",
                                  lower_signal = "numeric",
@@ -30,8 +30,14 @@ setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, C
 
 ################################################################################
 
+data_2 <- as.vector(user_data)
+
+data_3 <- unlist(data_2)
+
+data_4 <- unname(data_3)
+  
 object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
-  CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = user_mu_naught, hs = 0, sided = "two",r = 30), time=time, input = user_data ,Reject_H0 = Reject_H0)
+  CL= spc::xcusum.crit(k = user_k, L0 = 370.0, mu0 = user_mu_naught, hs = 0, sided = "two",r = 30), time=time, input = data_4 ,Reject_H0 = Reject_H0)
 
 ################################################################################
 
@@ -122,8 +128,15 @@ show(object)
 ```
 
 ```{r}
-CUSUM_Chart(rnorm(100),0)
+
+setwd("C:/Users/jake pc/Desktop/WORKING")
+
+data <- read.csv("rnorm_100_vars.csv", header = TRUE)
+
+CUSUM_Chart(data,0,.5)
 ```
+
+
 
 
 
