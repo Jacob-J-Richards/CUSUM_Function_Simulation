@@ -1,0 +1,125 @@
+---
+title: "CUSUM chart"
+output: html_document
+date: "2024-10-27"
+---
+
+```{r}
+setClass("CUSUM", representation(upper_signal = "numeric",
+                                 lower_signal = "numeric",
+                                 CL = "numeric",
+                                 x = "numeric",
+                                 time = "numeric",
+                                 stopped = "logical",
+                                 delta = "numeric",
+                                 random_time = "numeric"))
+
+setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, CL, x, time, stopped) {
+  upper_signal <- numeric()
+  lower_signal <- numeric()
+  x <- numeric()
+  time <- numeric()
+  random_time <- numeric()
+  .Object <- callNextMethod(.Object, x=x, upper_signal=upper_signal, lower_signal=lower_signal, CL=CL, time=time)
+  return(.Object)
+})
+```
+
+```{r}
+object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
+              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, delta=1)
+```
+
+
+signals
+```{r}
+setGeneric("signals", function(object) { standardGeneric("signals")  })
+setMethod("signals", signature = "CUSUM", function(object) {
+  
+  object@upper_signal[object@time] <- max(0, object@upper_signal[object@time - 1] + object@x[object@time] - 0.5)
+  
+  object@lower_signal[object@time] <- min(0, object@lower_signal[object@time - 1] + object@x[object@time] + 0.5)
+  
+  return(object)
+})
+```
+
+update
+```{r}
+setGeneric("update", function(object) { standardGeneric("update")  })
+setMethod("update", signature = "CUSUM", function(object) {
+  
+  object@time <- object@time + 1
+  
+  if (length(object@upper_signal) > 0) {
+    object@stopped <- (tail(object@upper_signal, 1) > object@CL) || ((tail(object@lower_signal, 1)) < -object@CL)
+  }
+  
+  if (length(object@lower_signal) > 0 ) {
+    object@stopped <- (tail(object@upper_signal, 1) > object@CL) || ((tail(object@lower_signal, 1)) < -object@CL)
+  }
+
+  return(object)
+})
+```
+
+```{r}
+setGeneric("creator2", function(object) {standardGeneric("creator2")})
+setMethod("creator2", signature = "CUSUM", function(object) {
+  
+  object@upper_signal = 0 
+  object@lower_signal = 0
+  object@stopped = FALSE
+  object@time = 1 
+  
+  pass <- rnorm(10000000) #time exceeded the data points because its very unlikely for N(0,1) to exceed control limit before 100
+  
+  while (!object@stopped) {
+    
+    object@x[object@time] <- pass[object@time] #the moment i change this from rnorm(1) it stops working 
+    
+    object <- signals(object)
+    
+    #need a message that the data has gone through through without the CL being reached 
+    #needs a stopping condition such as this 
+    object <- update(object)
+   
+  }
+
+  return(object)
+})
+```
+
+```{r}
+setGeneric("show_2", function(object) {standardGeneric("show_2")})
+setMethod("show_2", signature = "CUSUM", function(object) {
+  
+  
+  
+  plot(seq_along(object@upper_signal), object@upper_signal, type = "l", col = "blue",
+       ylab = "Signal", xlab = "Time", main = "Upper and Lower Signals Over Time",
+       ylim = range(c(object@upper_signal, object@lower_signal, object@CL, -object@CL)))
+  
+  lines(seq_along(object@lower_signal), object@lower_signal, col = "red")
+  
+  abline(h = object@CL, col = "green", lty = 2)
+  abline(h = -object@CL, col = "orange", lty = 2)
+  
+
+
+  cat("Control limit reached at time =", tail(object@time, 1), "\n")
+  cat("Mean changed at time =", object@random_time, "\n")
+  cat("Absolute value control limit:", object@CL, "\n")
+  cat("Last five upper limits:", tail(object@upper_signal, 5), "\n")
+  cat("Last five lower limits:", tail(object@lower_signal, 5), "\n")
+})
+```
+
+```{r}
+object <- creator2(object)
+show_2(object)
+```
+
+
+
+
