@@ -10,16 +10,13 @@ setClass("CUSUM", representation(upper_signal = "numeric",
                                  CL = "numeric",
                                  x = "numeric",
                                  time = "numeric",
-                                 stopped = "logical",
-                                 delta = "numeric",
-                                 random_time = "numeric"))
+                                 stopped = "logical"))
 
 setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, CL, x, time, stopped) {
   upper_signal <- numeric()
   lower_signal <- numeric()
   x <- numeric()
   time <- numeric()
-  random_time <- numeric()
   .Object <- callNextMethod(.Object, x=x, upper_signal=upper_signal, lower_signal=lower_signal, CL=CL, time=time)
   return(.Object)
 })
@@ -27,7 +24,7 @@ setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, C
 
 ```{r}
 object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
-              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, delta=1)
+              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time)
 ```
 
 
@@ -108,7 +105,6 @@ setMethod("show_2", signature = "CUSUM", function(object) {
 
 
   cat("Control limit reached at time =", tail(object@time, 1), "\n")
-  cat("Mean changed at time =", object@random_time, "\n")
   cat("Absolute value control limit:", object@CL, "\n")
   cat("Last five upper limits:", tail(object@upper_signal, 5), "\n")
   cat("Last five lower limits:", tail(object@lower_signal, 5), "\n")
