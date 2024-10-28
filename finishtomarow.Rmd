@@ -9,33 +9,35 @@ setClass("CUSUM", representation(upper_signal = "numeric",
                                  lower_signal = "numeric",
                                  CL = "numeric",
                                  x = "numeric",
-                                 H_naught = "logical",
+                                 Reject_H0 = "logical",
                                  time = "numeric",
                                  input = "numeric",
                                  stopped = "logical"))
 
-setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, CL, x, time, stopped, input, H_naught) {
+################################################################################
+
+
+setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, CL, x, time, stopped, input, Reject_H0) {
   upper_signal <- numeric()
   lower_signal <- numeric()
   x <- numeric()
-  input = numeric()
   time <- numeric()
   .Object <- callNextMethod(.Object, x=x, upper_signal=upper_signal, lower_signal=lower_signal, CL=CL, time=time, input=input)
   return(.Object)
 })
-```
 
-```{r}
+################################################################################
+
+
 calculations <- rnorm(100)
 
 
 object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
-              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, input=calculations,H_naught = H_naught)
-```
+              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, input = calculations,Reject_H0 = Reject_H0)
+
+################################################################################
 
 
-signals
-```{r}
 setGeneric("signals", function(object) { standardGeneric("signals")  })
 setMethod("signals", signature = "CUSUM", function(object) {
   
@@ -45,10 +47,9 @@ setMethod("signals", signature = "CUSUM", function(object) {
   
   return(object)
 })
-```
 
-update
-```{r}
+################################################################################
+
 setGeneric("update", function(object) { standardGeneric("update")  })
 setMethod("update", signature = "CUSUM", function(object) {
   
@@ -56,24 +57,23 @@ setMethod("update", signature = "CUSUM", function(object) {
   
   if (length(object@upper_signal) > 0) {
     object@stopped <- (tail(object@upper_signal, 1) > object@CL) || ((tail(object@lower_signal, 1)) < -object@CL)
-    object@H_naught <- FALSE
+    object@Reject_H0 <- TRUE
   }
   
   if (length(object@lower_signal) > 0 ) {
     object@stopped <- (tail(object@upper_signal, 1) > object@CL) || ((tail(object@lower_signal, 1)) < -object@CL)
-    object@H_naught <- FALSE
+    object@Reject_H0 <- TRUE
   }
   
   if (object@time > length(object@input)) {
     object@stopped <- TRUE
-    object@H_naught <- TRUE
+    object@Reject_H0 <- FALSE
   }
 
   return(object)
 })
-```
 
-```{r}
+################################################################################
 setGeneric("creator", function(object) {standardGeneric("creator")})
 setMethod("creator", signature = "CUSUM", function(object) {
   
@@ -94,9 +94,9 @@ setMethod("creator", signature = "CUSUM", function(object) {
 
   return(object)
 })
-```
 
-```{r}
+################################################################################
+
 setGeneric("show", function(object) {standardGeneric("show")})
 setMethod("show", signature = "CUSUM", function(object) {
   
@@ -110,14 +110,14 @@ setMethod("show", signature = "CUSUM", function(object) {
   
   cat("Control limit reached at time =", tail(object@time, 1), "\n")
   cat("Absolute value control limit:", object@CL, "\n")
-  cat("Fail to reject the Null Hypothesis", object@H_naught, "\n")
+  cat("Reject the null hypothesis:", object@Reject_H0, "\n")
   cat("length of input", length(object@input), "\n")
   cat("Last five upper limits:", tail(object@upper_signal, 5), "\n")
   cat("Last five lower limits:", tail(object@lower_signal, 5), "\n")
 })
-```
 
-```{r}
+################################################################################
+
 object <- creator(object)
 show(object)
 ```
