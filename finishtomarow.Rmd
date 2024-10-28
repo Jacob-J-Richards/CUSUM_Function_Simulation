@@ -5,6 +5,8 @@ date: "2024-10-27"
 ---
 
 ```{r}
+CUSUM_Chart <- function(user_data,user_mu_naught) {
+  
 setClass("CUSUM", representation(upper_signal = "numeric",
                                  lower_signal = "numeric",
                                  CL = "numeric",
@@ -28,12 +30,8 @@ setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, C
 
 ################################################################################
 
-
-calculations <- rnorm(100)
-
-
 object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
-              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, input = calculations,Reject_H0 = Reject_H0)
+  CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = user_mu_naught, hs = 0, sided = "two",r = 30), time=time, input = user_data ,Reject_H0 = Reject_H0)
 
 ################################################################################
 
@@ -120,6 +118,11 @@ setMethod("show", signature = "CUSUM", function(object) {
 
 object <- creator(object)
 show(object)
+}
+```
+
+```{r}
+CUSUM_Chart(rnorm(100),0)
 ```
 
 
