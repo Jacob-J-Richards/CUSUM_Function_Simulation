@@ -1,4 +1,4 @@
-<h1 align="center"> Cumulative Sum Chart and Simulation </h1>
+<h1 align="center"> Cumulative Sum Chart Function </h1>
 
 ## Install:
     install.packages('spc')
