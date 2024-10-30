@@ -3,8 +3,6 @@ title: "CUSUM chart"
 output: html_document
 date: "2024-10-27"
 ---
-the original took 319 lines this one only took 170 
-set class
 ```{r}
 setClass("CUSUM", representation(upper_signal = "numeric",
                                  lower_signal = "numeric",
@@ -24,11 +22,6 @@ setMethod("initialize", "CUSUM", function(.Object, upper_signal, lower_signal, C
   .Object <- callNextMethod(.Object, x=x, upper_signal=upper_signal, lower_signal=lower_signal, CL=CL, time=time, delta=delta)
   return(.Object)
 })
-```
-
-```{r}
-object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
-              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, delta=1)
 ```
 
 creator
@@ -127,7 +120,10 @@ setMethod("show", signature = "CUSUM", function(object) {
 
 call
 ```{r}
-#show(creator(object))
+object <- new("CUSUM", upper_signal=upper_signal, lower_signal=lower_signal, 
+              CL= spc::xcusum.crit(k = .5, L0 = 370.0, mu0 = 0, hs = 0, sided = "two",r = 30), time=time, delta=1)
+
+show(creator(object))
 ```
 
 run 10000 simulation without mean change, plot histogram of stopping times, mean of stopping times 
