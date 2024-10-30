@@ -1,26 +1,35 @@
-  CUSUM_FUNCTION.Rmd:
-  Is the function of which CUSUM_Package_2 is implimenting. 
-
-  Simulated_data_stream_demonstration.Rmd:
-  simulates a datastream being sampled from a population whos mean changes at a random time. Plots the     time the mean changes, time of 
-  control limit is breached, upper and lower signals etc. 
-
-
-
 <h1 align="center"> Cumulative Sum Chart and Simulation </h1>
 
-## Call Commands: 
-    Priestley_Chao(user_data_x,user_data_y,user_input_h,user_input_arg)
-    
-    Parzen_Rosenblatt(user_data,user_input_h,user_input)
-    
-    Nadaraya_Watson(user_data_x,user_data_y,user_input_h,user_input_arg)
-    
+## Install:
 
-## Test Code:
+    install.packages('spc')
 
-    Priestley_Chao(seq(-3.14,3.14,by=.1),cos(seq(-3.14,3.14,by=.1)),1,seq(-3.14,3.14,by=.01))
+    library(spc)
+
+
+## Call Command: 
+    CUSUM_Chart(data,k,L0,mu0,hs,sided,r) 
     
-    Parzen_Rosenblatt(rnorm(100),1,seq(-3,3,length.out=500)) 
+## Usage:
+
+    Provide your data sample as a column or row of a data frame, matrix, list, or just
+    a simple numeric vector. So long as it's 1 dimensional it will coerce the data.
+
+    the input arguments other than your provided data will be passed to 
+    xcusum.crit(k, L0, mu0 = 0, hs = 0, sided = "one", r = 30) 
+    for the calculation of control limits. 
+
+    xcusum.crit(k, L0, mu0 = 0, hs = 0, sided = "one", r = 30)
+    Arguments
+    k     reference value of the CUSUM control chart.
+    L0     in-control ARL.
+    mu0     in-control mean.
+    hs     so-called headstart (enables fast initial response).
+    sided     distinguishes between one-, two-sided and Crosier’s modified two-sided CUSUM
+    scheme by choosing "one", "two", and "Crosier", respectively.
+    r     number of quadrature nodes, dimension of the resulting linear equation system
+    is equal to r+1 (one-, two-sided) or 2r+1 (Crosier).
+
+
     
-    Nadaraya_Watson(seq(-3.14,3.14,by=.1),cos(seq(-3.14,3.14,by=.1)),1,seq(-3.14,3.14,by=.01))
+    
